@@ -734,7 +734,71 @@ h1 {
   .mascot-svg { width: 70px; height: 70px; }
   .page-tab-btn { font-size: 0.82rem; padding: 10px 6px; }
 }
+
+/* ── Sync chip ── */
+.sync-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 16px; border-radius: var(--radius-pill);
+  font-size: 0.8rem; font-weight: 700; margin-top: 14px;
+  cursor: pointer; transition: all 0.2s; border: 1.5px solid transparent;
+}
+.sync-chip.disconnected { background:#fff8e1; color:#e65100; border-color:rgba(230,81,0,.18); }
+.sync-chip.connected    { background:#e8f5e9; color:#2e7d32; border-color:rgba(46,125,50,.18); }
+.sync-chip.connecting   { background:var(--purple-pale); color:var(--purple); border-color:rgba(199,125,255,.25); }
+.sync-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+.sync-chip.disconnected .sync-dot { background:#e65100; }
+.sync-chip.connected .sync-dot    { background:#43a047; animation:pdot 2s infinite; }
+.sync-chip.connecting .sync-dot   { background:var(--purple); animation:pdot 1s infinite; }
+@keyframes pdot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.7)} }
+
+/* ── Firebase modal ── */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(60,20,80,.38);
+  backdrop-filter:blur(5px); z-index:200;
+  display:flex; align-items:center; justify-content:center; padding:20px;
+  opacity:0; pointer-events:none; transition:opacity .25s;
+}
+.modal-overlay.show { opacity:1; pointer-events:all; }
+.modal-box {
+  background:white; border-radius:var(--radius);
+  padding:26px 22px 22px; max-width:480px; width:100%;
+  max-height:88vh; overflow-y:auto;
+  box-shadow:0 20px 60px rgba(100,0,200,.2);
+  border:1.5px solid rgba(199,125,255,.2);
+  transform:translateY(24px); transition:transform .25s;
+}
+.modal-overlay.show .modal-box { transform:translateY(0); }
+.modal-title { font-size:1.1rem; font-weight:900; color:var(--text); margin-bottom:3px; }
+.modal-sub   { font-size:.8rem; font-weight:600; color:var(--text-light); margin-bottom:16px; line-height:1.6; }
+.setup-steps {
+  background:linear-gradient(135deg,#f3e5f5,#e3f2fd);
+  border-radius:var(--radius-sm); padding:14px 16px; margin-bottom:14px;
+  font-size:.79rem; font-weight:600; color:var(--text-mid); line-height:1.75;
+}
+.setup-steps a { color:var(--purple); }
+.modal-actions { display:flex; gap:10px; margin-top:14px; }
+.btn-modal-cancel {
+  flex:1; padding:11px; background:var(--pink-pale);
+  border:2px solid rgba(255,143,171,.3); border-radius:var(--radius-sm);
+  font-family:'Nunito',sans-serif; font-size:.9rem; font-weight:700;
+  color:var(--text-light); cursor:pointer;
+}
+.btn-modal-save {
+  flex:2; padding:11px;
+  background:linear-gradient(135deg,#ff6b9d,var(--purple)); border:none;
+  border-radius:var(--radius-sm); font-family:'Nunito',sans-serif;
+  font-size:.95rem; font-weight:900; color:white; cursor:pointer;
+  box-shadow:0 4px 16px var(--shadow-pink);
+}
+.btn-modal-disconnect {
+  padding:8px 16px; background:white;
+  border:2px solid rgba(230,81,0,.3); border-radius:var(--radius-sm);
+  font-family:'Nunito',sans-serif; font-size:.82rem; font-weight:700;
+  color:#e65100; cursor:pointer; margin-top:10px;
+}
 </style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -811,6 +875,10 @@ h1 {
       <div class="stat-chip">✅ <span class="num" id="statDone">0</span> done</div>
       <div class="stat-chip">💕 <span class="num" id="statLeft">0</span> to go</div>
       <div class="stat-chip">🔥 <span class="num" id="statMust">0</span> must-do</div>
+    </div>
+    <div id="syncChip" class="sync-chip disconnected" onclick="openSyncModal()" title="设置实时同步">
+      <span class="sync-dot"></span>
+      <span id="syncLabel">📶 设置实时同步</span>
     </div>
   </div>
 
@@ -1088,6 +1156,67 @@ h1 {
 
 </div><!-- /wrapper -->
 
+<!-- ── Firebase Sync Modal ── -->
+<div class="modal-overlay" id="syncModal" onclick="if(event.target===this)closeSyncModal()">
+  <div class="modal-box">
+
+    <!-- Setup view (not yet configured) -->
+    <div id="modalSetup">
+      <div class="modal-title">🔥 设置实时同步</div>
+      <div class="modal-sub">两人用同一个「情侣码」连接，添加或修改的内容会自动出现在对方手机/电脑上，不需要发链接！</div>
+
+      <div class="setup-steps">
+        <strong>📋 一次性设置（5 分钟）：</strong><br>
+        1️⃣ 打开 <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a>，用 Google 账号登录<br>
+        2️⃣ 点「创建项目」，随便起个名（如 our-dates），关闭 Analytics，创建<br>
+        3️⃣ 左侧菜单点「<strong>Realtime Database</strong>」→「创建数据库」→ 选任意地区 →「<strong>测试模式</strong>」→ 完成<br>
+        4️⃣ 左侧菜单点「⚙️ 项目设置」→ 下滑找「您的应用」→ 点「&lt;/&gt; 网页」，填昵称后继续<br>
+        5️⃣ 复制 <code>firebaseConfig = { ... }</code> 花括号里的全部 JSON 内容，粘贴到下方<br>
+        6️⃣ 填好情侣码和配置，保存。把同样的配置发给对方，对方也填一次
+      </div>
+
+      <div class="field">
+        <div class="field-label">💑 情侣码（两人填一样的，可自定义）</div>
+        <input class="input" id="fbRoomInput" placeholder="例如：seanjing2024" maxlength="40" autocomplete="off">
+      </div>
+      <div class="field">
+        <div class="field-label">🔥 Firebase 配置（粘贴 JSON）</div>
+        <textarea class="textarea-input" id="fbConfigInput"
+          style="min-height:110px;font-size:0.75rem;font-family:monospace;line-height:1.5"
+          placeholder='{"apiKey":"AIza...","authDomain":"...","databaseURL":"https://...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}'></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="closeSyncModal()">取消</button>
+        <button class="btn-modal-save"   onclick="saveSyncConfig()">🔥 连接同步</button>
+      </div>
+    </div>
+
+    <!-- Connected view -->
+    <div id="modalConnected" style="display:none">
+      <div class="modal-title">✅ 实时同步已开启 🎉</div>
+      <div class="modal-sub">两人的更改会自动同步！把下面的情侣码告诉对方，让他/她也连上。</div>
+
+      <div class="field">
+        <div class="field-label">💑 你们的情侣码</div>
+        <div style="display:flex;gap:8px">
+          <input class="input" id="fbRoomDisplay" readonly onclick="this.select()"
+            style="font-weight:900;font-size:1.05rem;text-align:center;letter-spacing:2px">
+          <button class="btn-copy" onclick="copyRoomCode()">📋 复制</button>
+        </div>
+      </div>
+      <p style="font-size:.78rem;font-weight:600;color:var(--text-light);margin-top:6px;line-height:1.55">
+        把情侣码和 Firebase 配置发给对方，对方在「设置实时同步」里填入相同的信息就行啦 💕
+      </p>
+      <button class="btn-modal-disconnect" onclick="disconnectSync()">🔌 断开同步</button>
+      <div class="modal-actions" style="margin-top:8px">
+        <button class="btn-modal-save" onclick="closeSyncModal()" style="flex:1">✓ 关闭</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <!-- Toast & celebrate -->
 <div class="toast" id="toast"></div>
 <div class="celebrate" id="celebrate">🎉 ✨ 💕 ✨ 🎉</div>
@@ -1108,6 +1237,153 @@ let timeMode    = 'exact';
 let filter      = 'all';
 let tripFilter  = 'all';
 let activePage  = 'dates';
+
+// ─────────────────────────────────────────────────────────
+//  FIREBASE REALTIME SYNC
+// ─────────────────────────────────────────────────────────
+let fbApp = null;
+let fbDb  = null;
+let fbRoom = null;
+let fbListenersOn = false;
+
+function initFirebase() {
+  if (typeof firebase === 'undefined') return;
+  const cfgStr = localStorage.getItem('fb_config');
+  fbRoom = localStorage.getItem('fb_room');
+  if (!cfgStr || !fbRoom) { updateSyncStatus('disconnected'); return; }
+  try {
+    const cfg = JSON.parse(cfgStr);
+    if (!cfg.databaseURL) { updateSyncStatus('disconnected'); return; }
+    updateSyncStatus('connecting');
+    try {
+      fbApp = firebase.app('datelist-app');
+    } catch(e) {
+      fbApp = firebase.initializeApp(cfg, 'datelist-app');
+    }
+    fbDb = firebase.database(fbApp);
+    attachFbListeners();
+  } catch(e) {
+    console.error('Firebase init error:', e);
+    updateSyncStatus('disconnected');
+  }
+}
+
+function attachFbListeners() {
+  if (fbListenersOn) return;
+  fbListenersOn = true;
+
+  fbDb.ref('.info/connected').on('value', snap => {
+    updateSyncStatus(snap.val() ? 'connected' : 'connecting');
+  });
+
+  fbDb.ref(`couples/${fbRoom}/todos`).on('value', snap => {
+    const data = snap.val();
+    if (data === null) {
+      // DB empty — push our local data up as initial sync
+      if (todos.length > 0) fbDb.ref(`couples/${fbRoom}/todos`).set(todos);
+      return;
+    }
+    const arr = Array.isArray(data) ? data : Object.values(data);
+    // Skip if this is just an echo of our own write
+    if (JSON.stringify(arr) === JSON.stringify(todos)) return;
+    todos = arr;
+    try { localStorage.setItem('datelist_v2', JSON.stringify(todos)); } catch(e){}
+    renderAll();
+    toast('💕 同步更新啦！');
+  });
+
+  fbDb.ref(`couples/${fbRoom}/trips`).on('value', snap => {
+    const data = snap.val();
+    if (data === null) {
+      if (trips.length > 0) fbDb.ref(`couples/${fbRoom}/trips`).set(trips);
+      return;
+    }
+    const arr = Array.isArray(data) ? data : Object.values(data);
+    if (JSON.stringify(arr) === JSON.stringify(trips)) return;
+    trips = arr;
+    try { localStorage.setItem('dreamtrips_v1', JSON.stringify(trips)); } catch(e){}
+    renderTrips();
+    toast('✈️ 旅行计划已同步！');
+  });
+}
+
+function updateSyncStatus(state) {
+  const chip  = document.getElementById('syncChip');
+  const label = document.getElementById('syncLabel');
+  if (!chip) return;
+  chip.className = `sync-chip ${state}`;
+  if      (state === 'connected')   label.textContent = '🟢 实时同步已开启';
+  else if (state === 'connecting')  label.textContent = '⏳ 正在连接...';
+  else                               label.textContent = '📶 设置实时同步';
+}
+
+function openSyncModal() {
+  const modal = document.getElementById('syncModal');
+  modal.classList.add('show');
+  if (fbDb) {
+    document.getElementById('modalSetup').style.display     = 'none';
+    document.getElementById('modalConnected').style.display = '';
+    document.getElementById('fbRoomDisplay').value = fbRoom || '';
+  } else {
+    document.getElementById('modalSetup').style.display     = '';
+    document.getElementById('modalConnected').style.display = 'none';
+    document.getElementById('fbRoomInput').value   = localStorage.getItem('fb_room') || '';
+    document.getElementById('fbConfigInput').value = localStorage.getItem('fb_config') || '';
+  }
+}
+
+function closeSyncModal() {
+  document.getElementById('syncModal').classList.remove('show');
+}
+
+function saveSyncConfig() {
+  const room = (document.getElementById('fbRoomInput').value || '').trim().replace(/[^a-zA-Z0-9_\-]/g,'');
+  const raw  = (document.getElementById('fbConfigInput').value || '').trim();
+  if (!room) { alert('请输入情侣码！'); return; }
+  if (!raw)  { alert('请粘贴 Firebase 配置 JSON！'); return; }
+  let cfg;
+  try { cfg = JSON.parse(raw); } catch(e) { alert('JSON 格式有误，请检查！\n\n' + e.message); return; }
+  if (!cfg.databaseURL) { alert('配置中缺少 databaseURL！\n请确认已在 Firebase 控制台创建 Realtime Database。'); return; }
+  localStorage.setItem('fb_room',   room);
+  localStorage.setItem('fb_config', JSON.stringify(cfg));
+  fbRoom = room;
+  closeSyncModal();
+  // Detach old listeners then re-init
+  if (fbDb) {
+    try {
+      fbDb.ref('.info/connected').off();
+      fbDb.ref(`couples/${fbRoom}/todos`).off();
+      fbDb.ref(`couples/${fbRoom}/trips`).off();
+    } catch(e){}
+  }
+  fbDb = null; fbListenersOn = false;
+  initFirebase();
+  toast('🔥 Firebase 已连接！两人添加的内容将自动同步 💕');
+}
+
+function copyRoomCode() {
+  const el = document.getElementById('fbRoomDisplay');
+  el.select();
+  try { document.execCommand('copy'); toast('📋 情侣码已复制！'); } catch(e){}
+}
+
+function disconnectSync() {
+  if (!confirm('断开同步后，数据仍保留在本设备。确定断开？')) return;
+  const oldRoom = fbRoom;
+  if (fbDb && oldRoom) {
+    try {
+      fbDb.ref('.info/connected').off();
+      fbDb.ref(`couples/${oldRoom}/todos`).off();
+      fbDb.ref(`couples/${oldRoom}/trips`).off();
+    } catch(e){}
+  }
+  localStorage.removeItem('fb_config');
+  localStorage.removeItem('fb_room');
+  fbDb = null; fbApp = null; fbRoom = null; fbListenersOn = false;
+  updateSyncStatus('disconnected');
+  closeSyncModal();
+  toast('🔌 已断开同步');
+}
 
 const EMOJIS = [
   '💕','🌸','🍓','☕','🎬','🏖️','🍜','🎡','🚗','🌙',
@@ -1142,6 +1418,7 @@ function init() {
   renderTrips();
   spawnParticles();
   watchNames();
+  initFirebase();
 }
 
 function watchNames() {
@@ -1518,10 +1795,16 @@ function esc(s) {
 // ─────────────────────────────────────────────────────────
 function saveTodos() {
   try { localStorage.setItem('datelist_v2', JSON.stringify(todos)); } catch(e){}
+  if (fbDb && fbRoom) {
+    fbDb.ref(`couples/${fbRoom}/todos`).set(todos).catch(e => console.error('FB todos write:', e));
+  }
 }
 
 function saveTrips() {
   try { localStorage.setItem('dreamtrips_v1', JSON.stringify(trips)); } catch(e){}
+  if (fbDb && fbRoom) {
+    fbDb.ref(`couples/${fbRoom}/trips`).set(trips).catch(e => console.error('FB trips write:', e));
+  }
 }
 
 function loadData() {
