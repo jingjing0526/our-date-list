@@ -187,6 +187,41 @@ h1 {
   opacity: 0.55;
 }
 
+/* ── Page Tab Navigation ──────────────────────────── */
+.page-tabs {
+  display: flex;
+  background: white;
+  border-radius: var(--radius);
+  padding: 6px;
+  gap: 6px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px var(--shadow-pink);
+  border: 1.5px solid rgba(255,179,198,0.25);
+}
+.page-tab-btn {
+  flex: 1;
+  padding: 12px 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-light);
+  background: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.page-tab-btn.active {
+  background: linear-gradient(135deg, #ff6b9d 0%, #c77dff 60%, #89c4f4 100%);
+  color: white;
+  box-shadow: 0 3px 14px var(--shadow-pink);
+}
+.page-tab-btn:not(.active):hover {
+  background: var(--pink-pale);
+  color: var(--text-mid);
+}
+
 /* ── Cards ────────────────────────────────────────── */
 .card {
   background: white;
@@ -254,9 +289,11 @@ h1 {
 .priority-group {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 .priority-btn {
   flex: 1;
+  min-width: 60px;
   padding: 8px 6px;
   border: 2px solid rgba(255,179,198,0.3);
   border-radius: var(--radius-sm);
@@ -271,9 +308,10 @@ h1 {
 }
 .priority-btn:hover { border-color: var(--pink-mid); }
 .priority-btn.active { color: white; border-color: transparent; }
-.priority-btn.active.p-must  { background: linear-gradient(135deg, #ff6b9d, #ff8fab); }
-.priority-btn.active.p-want  { background: linear-gradient(135deg, #c77dff, #d8a9ff); }
-.priority-btn.active.p-maybe { background: linear-gradient(135deg, #74c0fc, #a0d8ef); }
+.priority-btn.active.p-must   { background: linear-gradient(135deg, #ff6b9d, #ff8fab); }
+.priority-btn.active.p-want   { background: linear-gradient(135deg, #c77dff, #d8a9ff); }
+.priority-btn.active.p-maybe  { background: linear-gradient(135deg, #74c0fc, #a0d8ef); }
+.priority-btn.active.p-future { background: linear-gradient(135deg, #ffd166, #ffb347); }
 
 /* Category tags */
 .category-group {
@@ -442,6 +480,25 @@ h1 {
 .btn-copy:hover { background: var(--purple); color: white; }
 .share-hint { font-size: 0.75rem; font-weight: 600; color: var(--text-light); margin-top: 6px; }
 
+/* QR code */
+.qr-wrap {
+  display: none;
+  margin-top: 14px;
+  text-align: center;
+}
+.qr-wrap.show { display: block; }
+.qr-wrap img {
+  border-radius: var(--radius-sm);
+  border: 3px solid rgba(199,125,255,0.25);
+  box-shadow: 0 4px 16px var(--shadow-pur);
+}
+.qr-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-light);
+  margin-top: 8px;
+}
+
 /* ── Filter bar ────────────────────────────────────── */
 .filter-bar {
   display: flex;
@@ -515,6 +572,7 @@ h1 {
 .todo-item.p-must::before   { background: linear-gradient(to bottom, #ff6b9d, #ff8fab); }
 .todo-item.p-want::before   { background: linear-gradient(to bottom, var(--purple), var(--purple-mid)); }
 .todo-item.p-maybe::before  { background: linear-gradient(to bottom, var(--sky), var(--mint)); }
+.todo-item.p-future::before { background: linear-gradient(to bottom, #ffd166, #ffb347); }
 .todo-item:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(199,125,255,0.14); }
 .todo-item.done { opacity: 0.52; }
 .todo-item.done .todo-title { text-decoration: line-through; color: var(--text-light); }
@@ -560,9 +618,10 @@ h1 {
 .tag-time { background: #fff3e0; color: #e65100; }
 .tag-cat  { background: var(--purple-pale); color: var(--purple); }
 .tag-added { background: var(--pink-pale); color: var(--pink); }
-.tag-priority-must  { background: #fce4ec; color: #c2185b; }
-.tag-priority-want  { background: var(--purple-pale); color: #7b1fa2; }
-.tag-priority-maybe { background: #e3f2fd; color: #1565c0; }
+.tag-priority-must   { background: #fce4ec; color: #c2185b; }
+.tag-priority-want   { background: var(--purple-pale); color: #7b1fa2; }
+.tag-priority-maybe  { background: #e3f2fd; color: #1565c0; }
+.tag-priority-future { background: #fff8e1; color: #e65100; }
 
 .todo-actions {
   display: flex;
@@ -643,11 +702,37 @@ h1 {
   gap: 6px;
 }
 
+/* ── Dream Trips banner ──────────────────────────── */
+.trips-banner {
+  background: linear-gradient(135deg, #e8f4fd 0%, #f0e6ff 50%, #fde8f4 100%);
+  border-radius: var(--radius);
+  border: 1.5px solid rgba(199,125,255,0.2);
+  padding: 20px 24px;
+  margin-bottom: 22px;
+  text-align: center;
+  box-shadow: 0 4px 20px var(--shadow-pur);
+}
+.trips-banner h2 {
+  font-size: 1.3rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #667eea, #764ba2, #ff6b9d);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 6px;
+}
+.trips-banner p {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
 @media (max-width: 480px) {
   h1 { font-size: 1.7rem; }
   .input-row, .input-row-3 { grid-template-columns: 1fr; }
-  .priority-group { flex-direction: column; }
+  .priority-group { flex-wrap: wrap; }
   .mascot-svg { width: 70px; height: 70px; }
+  .page-tab-btn { font-size: 0.82rem; padding: 10px 6px; }
 }
 </style>
 </head>
@@ -712,11 +797,11 @@ h1 {
     <div class="couple-badge">
       <div class="name-chip">
         <div class="avatar avatar-a">🌸</div>
-        <input class="editable-name" id="name1" value="Babe" maxlength="10" title="Click to edit">
+        <input class="editable-name" id="name1" value="Sean" maxlength="10" title="Click to edit">
       </div>
       <div class="heart-divider">💗</div>
       <div class="name-chip">
-        <input class="editable-name" id="name2" value="Boo" maxlength="10" title="Click to edit">
+        <input class="editable-name" id="name2" value="Jing" maxlength="10" title="Click to edit">
         <div class="avatar avatar-b">⭐</div>
       </div>
     </div>
@@ -731,128 +816,277 @@ h1 {
 
   <div class="deco-strip">🌸 🍓 🌙 💌 🎠 ☕ 🎡 🌷 🧁</div>
 
-  <!-- ── Add form ── -->
-  <div class="card">
-    <div class="card-header">
-      <span class="icon">✏️</span> Add a New Date Plan
-    </div>
-    <div class="card-body">
+  <!-- ── Page Tabs ── -->
+  <div class="page-tabs">
+    <button class="page-tab-btn active" id="tabDates" onclick="switchPage('dates')">📅 Date Plans</button>
+    <button class="page-tab-btn" id="tabTrips" onclick="switchPage('trips')">✈️ Dream Trips</button>
+  </div>
 
-      <!-- Emoji -->
-      <div class="field">
-        <div class="field-label">🎨 Pick an emoji</div>
-        <div class="emoji-row" id="emojiRow"></div>
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- ── DATE PLANS PAGE ── -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div id="pageDates">
+
+    <!-- ── Add form ── -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">✏️</span> Add a New Date Plan
       </div>
+      <div class="card-body">
 
-      <!-- Title -->
-      <div class="field">
-        <div class="field-label">💭 What do you want to do?</div>
-        <input class="input" id="fTitle" type="text" placeholder="e.g. Watch the sunset together ~" maxlength="60">
-      </div>
-
-      <!-- Note -->
-      <div class="field">
-        <div class="field-label">📝 Notes or details (optional)</div>
-        <textarea class="textarea-input" id="fNote" placeholder="Any ideas, locations, or things to bring..."></textarea>
-      </div>
-
-      <!-- Date & Time -->
-      <div class="input-row">
+        <!-- Emoji -->
         <div class="field">
-          <div class="field-label">📅 Date</div>
-          <input class="input" id="fDate" type="date">
+          <div class="field-label">🎨 Pick an emoji</div>
+          <div class="emoji-row" id="emojiRow"></div>
         </div>
+
+        <!-- Title -->
         <div class="field">
-          <div class="field-label">⏰ Time</div>
-          <div class="toggle-tabs">
-            <button class="tab-btn active" id="tabExact"  onclick="setMode('exact')">Exact</button>
-            <button class="tab-btn"        id="tabApprox" onclick="setMode('approx')">Approx</button>
-            <button class="tab-btn"        id="tabTBD"    onclick="setMode('tbd')">TBD</button>
+          <div class="field-label">💭 What do you want to do?</div>
+          <input class="input" id="fTitle" type="text" placeholder="e.g. Watch the sunset together ~" maxlength="60">
+        </div>
+
+        <!-- Note -->
+        <div class="field">
+          <div class="field-label">📝 Notes or details (optional)</div>
+          <textarea class="textarea-input" id="fNote" placeholder="Any ideas, locations, or things to bring..."></textarea>
+        </div>
+
+        <!-- Date & Time -->
+        <div class="input-row">
+          <div class="field">
+            <div class="field-label">📅 Date</div>
+            <input class="input" id="fDate" type="date">
           </div>
-          <div id="timeExact">
-            <input class="input" id="fTime" type="time">
+          <div class="field">
+            <div class="field-label">⏰ Time</div>
+            <div class="toggle-tabs">
+              <button class="tab-btn active" id="tabExact"  onclick="setMode('exact')">Exact</button>
+              <button class="tab-btn"        id="tabApprox" onclick="setMode('approx')">Approx</button>
+              <button class="tab-btn"        id="tabTBD"    onclick="setMode('tbd')">TBD</button>
+            </div>
+            <div id="timeExact">
+              <input class="input" id="fTime" type="time">
+            </div>
+            <div id="timeApprox" style="display:none">
+              <select class="select-input" id="fApprox">
+                <option value="">Choose a time of day</option>
+                <option value="🌅 Early morning">🌅 Early morning</option>
+                <option value="☀️ Morning">☀️ Morning</option>
+                <option value="🌤️ Noon-ish">🌤️ Noon-ish</option>
+                <option value="🌞 Afternoon">🌞 Afternoon</option>
+                <option value="🌇 Late afternoon">🌇 Late afternoon</option>
+                <option value="🌆 Evening">🌆 Evening</option>
+                <option value="🌙 Night">🌙 Night</option>
+                <option value="⭐ Late night">⭐ Late night</option>
+              </select>
+            </div>
+            <div id="timeTBD" style="display:none">
+              <input class="input" value="📅 Whenever we're free" readonly style="color:var(--text-light)">
+            </div>
           </div>
-          <div id="timeApprox" style="display:none">
-            <select class="select-input" id="fApprox">
-              <option value="">Choose a time of day</option>
-              <option value="🌅 Early morning">🌅 Early morning</option>
-              <option value="☀️ Morning">☀️ Morning</option>
-              <option value="🌤️ Noon-ish">🌤️ Noon-ish</option>
-              <option value="🌞 Afternoon">🌞 Afternoon</option>
-              <option value="🌇 Late afternoon">🌇 Late afternoon</option>
-              <option value="🌆 Evening">🌆 Evening</option>
-              <option value="🌙 Night">🌙 Night</option>
-              <option value="⭐ Late night">⭐ Late night</option>
+        </div>
+
+        <!-- Category & Priority -->
+        <div class="input-row">
+          <div class="field">
+            <div class="field-label">🏷️ Category</div>
+            <div class="category-group" id="catGroup"></div>
+          </div>
+          <div class="field">
+            <div class="field-label">⚡ Priority</div>
+            <div class="priority-group">
+              <button class="priority-btn p-must  active" data-p="must"   onclick="setPriority(this)">🔥 Must!</button>
+              <button class="priority-btn p-want"         data-p="want"   onclick="setPriority(this)">💜 Want</button>
+              <button class="priority-btn p-maybe"        data-p="maybe"  onclick="setPriority(this)">💭 Maybe</button>
+              <button class="priority-btn p-future"       data-p="future" onclick="setPriority(this)">🌟 Future</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Added by -->
+        <div class="field">
+          <div class="field-label">👤 Added by</div>
+          <select class="select-input" id="fAddedBy"></select>
+        </div>
+
+        <button class="btn-submit" onclick="addTodo()">💕 Add to Our List</button>
+      </div>
+    </div>
+
+    <!-- ── Share ── -->
+    <div class="share-card">
+      <div class="share-top">
+        <div class="share-info">
+          <strong>🔗 Sync with your partner</strong>
+          <span>Share a link or QR code — they open it and your lists merge!</span>
+        </div>
+        <button class="btn-share" onclick="doShare('dates')">✨ Generate Link</button>
+      </div>
+      <div class="share-url-wrap" id="shareWrap">
+        <div class="share-url-row">
+          <input type="text" id="shareInput" readonly onclick="this.select()">
+          <button class="btn-copy" onclick="copyUrl()">📋 Copy</button>
+        </div>
+        <div class="share-hint">💌 Send to partner — when they open it, your lists merge automatically!</div>
+        <div class="qr-wrap" id="qrWrap">
+          <img id="qrImg" src="" alt="QR Code" width="160" height="160">
+          <div class="qr-label">📱 Scan with phone to sync</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── List ── -->
+    <div class="section-heading">
+      <h2>🗓️ Our Date Plans</h2>
+    </div>
+
+    <div class="filter-bar">
+      <span class="filter-label">Filter:</span>
+      <button class="filter-btn active" data-f="all"    onclick="setFilter(this,'all')">All</button>
+      <button class="filter-btn"        data-f="todo"   onclick="setFilter(this,'todo')">To-do</button>
+      <button class="filter-btn"        data-f="done"   onclick="setFilter(this,'done')">Done</button>
+      <button class="filter-btn"        data-f="must"   onclick="setFilter(this,'must')">🔥 Must</button>
+      <button class="filter-btn"        data-f="want"   onclick="setFilter(this,'want')">💜 Want</button>
+      <button class="filter-btn"        data-f="maybe"  onclick="setFilter(this,'maybe')">💭 Maybe</button>
+      <button class="filter-btn"        data-f="future" onclick="setFilter(this,'future')">🌟 Future</button>
+    </div>
+
+    <div id="listContainer"></div>
+  </div><!-- /pageDates -->
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- ── DREAM TRIPS PAGE ── -->
+  <!-- ══════════════════════════════════════════════ -->
+  <div id="pageTrips" style="display:none">
+
+    <div class="trips-banner">
+      <h2>✈️ Our Dream Trips & Big Plans</h2>
+      <p>Long-term adventures, travel dreams, and future goals together 🌍</p>
+    </div>
+
+    <!-- ── Add trip form ── -->
+    <div class="card">
+      <div class="card-header">
+        <span class="icon">🗺️</span> Add a Dream Trip or Future Plan
+      </div>
+      <div class="card-body">
+
+        <!-- Emoji -->
+        <div class="field">
+          <div class="field-label">🎨 Pick an emoji</div>
+          <div class="emoji-row" id="tripEmojiRow"></div>
+        </div>
+
+        <!-- Title -->
+        <div class="field">
+          <div class="field-label">💭 Where or what?</div>
+          <input class="input" id="tTitle" type="text" placeholder="e.g. Cherry blossom season in Japan 🌸" maxlength="60">
+        </div>
+
+        <!-- Note -->
+        <div class="field">
+          <div class="field-label">📝 Notes or details (optional)</div>
+          <textarea class="textarea-input" id="tNote" placeholder="Places to visit, things to try, budget ideas..."></textarea>
+        </div>
+
+        <!-- Year & Season -->
+        <div class="input-row">
+          <div class="field">
+            <div class="field-label">📅 Rough Timeframe</div>
+            <select class="select-input" id="tYear">
+              <option value="Someday ✨">Someday ✨</option>
+              <option value="This year 🗓️">This year 🗓️</option>
+              <option value="Next year 📆">Next year 📆</option>
+              <option value="2026 🌟">2026 🌟</option>
+              <option value="2027 🌟">2027 🌟</option>
+              <option value="2028 🌟">2028 🌟</option>
+              <option value="2029 🌟">2029 🌟</option>
+              <option value="2030 🌟">2030 🌟</option>
+              <option value="Dream bucket list 🌈">Dream bucket list 🌈</option>
             </select>
           </div>
-          <div id="timeTBD" style="display:none">
-            <input class="input" value="📅 Whenever we're free" readonly style="color:var(--text-light)">
+          <div class="field">
+            <div class="field-label">🌸 Season</div>
+            <select class="select-input" id="tSeason">
+              <option value="">Any season</option>
+              <option value="🌸 Spring">🌸 Spring</option>
+              <option value="☀️ Summer">☀️ Summer</option>
+              <option value="🍂 Fall">🍂 Fall</option>
+              <option value="❄️ Winter">❄️ Winter</option>
+            </select>
           </div>
         </div>
-      </div>
 
-      <!-- Category & Priority -->
-      <div class="input-row">
-        <div class="field">
-          <div class="field-label">🏷️ Category</div>
-          <div class="category-group" id="catGroup"></div>
-        </div>
-        <div class="field">
-          <div class="field-label">⚡ Priority</div>
-          <div class="priority-group">
-            <button class="priority-btn p-must  active" data-p="must"  onclick="setPriority(this)">🔥 Must!</button>
-            <button class="priority-btn p-want"         data-p="want"  onclick="setPriority(this)">💜 Want</button>
-            <button class="priority-btn p-maybe"        data-p="maybe" onclick="setPriority(this)">💭 Maybe</button>
+        <!-- Trip Category & Priority -->
+        <div class="input-row">
+          <div class="field">
+            <div class="field-label">🏷️ Type</div>
+            <div class="category-group" id="tripCatGroup"></div>
+          </div>
+          <div class="field">
+            <div class="field-label">⚡ Priority</div>
+            <div class="priority-group" id="tripPriGroup">
+              <button class="priority-btn p-must  active" data-p="must"   onclick="setTripPriority(this)">🔥 Must!</button>
+              <button class="priority-btn p-want"         data-p="want"   onclick="setTripPriority(this)">💜 Want</button>
+              <button class="priority-btn p-maybe"        data-p="maybe"  onclick="setTripPriority(this)">💭 Maybe</button>
+              <button class="priority-btn p-future"       data-p="future" onclick="setTripPriority(this)">🌟 Dream</button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Added by -->
-      <div class="field">
-        <div class="field-label">👤 Added by</div>
-        <select class="select-input" id="fAddedBy"></select>
-      </div>
+        <!-- Added by -->
+        <div class="field">
+          <div class="field-label">👤 Added by</div>
+          <select class="select-input" id="tAddedBy"></select>
+        </div>
 
-      <button class="btn-submit" onclick="addTodo()">💕 Add to Our List</button>
+        <button class="btn-submit" onclick="addTrip()">✈️ Add to Dream Trips</button>
+      </div>
     </div>
-  </div>
 
-  <!-- ── Share ── -->
-  <div class="share-card">
-    <div class="share-top">
-      <div class="share-info">
-        <strong>🔗 Share with your partner</strong>
-        <span>Generate a link — send it and they'll see your whole list!</span>
+    <!-- ── Share trips ── -->
+    <div class="share-card">
+      <div class="share-top">
+        <div class="share-info">
+          <strong>🔗 Sync Dream Trips</strong>
+          <span>Share a link or QR code — your partner's trips will merge with yours!</span>
+        </div>
+        <button class="btn-share" onclick="doShare('trips')">✨ Generate Link</button>
       </div>
-      <button class="btn-share" onclick="doShare()">✨ Generate Link</button>
-    </div>
-    <div class="share-url-wrap" id="shareWrap">
-      <div class="share-url-row">
-        <input type="text" id="shareInput" readonly onclick="this.select()">
-        <button class="btn-copy" onclick="copyUrl()">📋 Copy</button>
+      <div class="share-url-wrap" id="tripShareWrap">
+        <div class="share-url-row">
+          <input type="text" id="tripShareInput" readonly onclick="this.select()">
+          <button class="btn-copy" onclick="copyTripUrl()">📋 Copy</button>
+        </div>
+        <div class="share-hint">💌 Send to partner — when they open it, dream trips merge automatically!</div>
+        <div class="qr-wrap" id="tripQrWrap">
+          <img id="tripQrImg" src="" alt="QR Code" width="160" height="160">
+          <div class="qr-label">📱 Scan with phone to sync</div>
+        </div>
       </div>
-      <div class="share-hint">💌 Paste this link and send to your partner. When they open it, the list syncs automatically!</div>
     </div>
-  </div>
 
-  <!-- ── List ── -->
-  <div class="section-heading">
-    <h2>🗓️ Our Plans</h2>
-    <div style="display:flex;gap:6px;flex-wrap:wrap" id="sortBar"></div>
-  </div>
+    <!-- ── Trip list ── -->
+    <div class="section-heading">
+      <h2>🌍 Our Dream List</h2>
+    </div>
 
-  <div class="filter-bar">
-    <span class="filter-label">Filter:</span>
-    <button class="filter-btn active" data-f="all"   onclick="setFilter(this,'all')">All</button>
-    <button class="filter-btn"        data-f="todo"  onclick="setFilter(this,'todo')">To-do</button>
-    <button class="filter-btn"        data-f="done"  onclick="setFilter(this,'done')">Done</button>
-    <button class="filter-btn"        data-f="must"  onclick="setFilter(this,'must')">🔥 Must</button>
-    <button class="filter-btn"        data-f="want"  onclick="setFilter(this,'want')">💜 Want</button>
-    <button class="filter-btn"        data-f="maybe" onclick="setFilter(this,'maybe')">💭 Maybe</button>
-  </div>
+    <div class="filter-bar">
+      <span class="filter-label">Filter:</span>
+      <button class="filter-btn active" data-f="all"    onclick="setTripFilter(this,'all')">All</button>
+      <button class="filter-btn"        data-f="todo"   onclick="setTripFilter(this,'todo')">To-do</button>
+      <button class="filter-btn"        data-f="done"   onclick="setTripFilter(this,'done')">Done</button>
+      <button class="filter-btn"        data-f="must"   onclick="setTripFilter(this,'must')">🔥 Must</button>
+      <button class="filter-btn"        data-f="want"   onclick="setTripFilter(this,'want')">💜 Want</button>
+      <button class="filter-btn"        data-f="maybe"  onclick="setTripFilter(this,'maybe')">💭 Maybe</button>
+      <button class="filter-btn"        data-f="future" onclick="setTripFilter(this,'future')">🌟 Dream</button>
+    </div>
 
-  <div id="listContainer"></div>
-</div>
+    <div id="tripContainer"></div>
+  </div><!-- /pageTrips -->
+
+</div><!-- /wrapper -->
 
 <!-- Toast & celebrate -->
 <div class="toast" id="toast"></div>
@@ -863,25 +1097,49 @@ h1 {
 //  STATE
 // ─────────────────────────────────────────────────────────
 let todos    = [];
-let selEmoji = '💕';
-let selPri   = 'must';
-let selCat   = 'Date Night';
-let timeMode = 'exact';
-let filter   = 'all';
+let trips    = [];
+let selEmoji    = '💕';
+let selTripEmoji = '✈️';
+let selPri      = 'must';
+let selTripPri  = 'must';
+let selCat      = 'Date Night';
+let selTripCat  = 'International';
+let timeMode    = 'exact';
+let filter      = 'all';
+let tripFilter  = 'all';
+let activePage  = 'dates';
 
-const EMOJIS = ['💕','🌸','🍓','☕','🎬','🏖️','🍜','🎡','🚗','🌙','🎨','🎤','🛍️','🧁','🎮','🌈','🎪','🌺','⛺','✈️','🎠','🍰','🎆','🌊','🎭'];
-const CATS   = ['Date Night','Food & Drinks','Outdoor','Travel','Cozy','Adventure','Creative','Movies','Shopping','Other'];
+const EMOJIS = [
+  '💕','🌸','🍓','☕','🎬','🏖️','🍜','🎡','🚗','🌙',
+  '🎨','🎤','🛍️','🧁','🎮','🌈','🎪','🌺','⛺','✈️',
+  '🎠','🍰','🎆','🌊','🎭','🍣','🍦','🎻','🛶','🏔️',
+  '🌅','🌃','🎑','🎀','🎯','🎲','🍷','🧋','🎹','🌻',
+  '🎈','🦋','🐾','🌴','🍁','🏄','🎸','🎃','🎄','💌'
+];
+
+const TRIP_EMOJIS = [
+  '✈️','🗺️','🌍','🌏','🌎','🏔️','🏖️','🗼','🏯','🗽',
+  '🌸','🌊','🏕️','🚂','🚢','🛳️','🏝️','🌋','🎑','🌃',
+  '🌅','🍜','🍣','🍷','🎭','🎪','🏄','🎿','🧳','🛺',
+  '🌴','🦁','🐘','🦒','🌺','🍁','❄️','🎋','🕌','⛩️'
+];
+
+const CATS      = ['Date Night','Food & Drinks','Outdoor','Travel','Cozy','Adventure','Creative','Movies','Shopping','Other'];
+const TRIP_CATS = ['International','Domestic','Road Trip','Cruise','City Break','Nature','Cultural','Beach','Mountain','Other'];
 
 // ─────────────────────────────────────────────────────────
 //  INIT
 // ─────────────────────────────────────────────────────────
 function init() {
-  buildEmojiPicker();
-  buildCategories();
+  buildEmojiPicker('emojiRow', EMOJIS, () => selEmoji, v => selEmoji = v);
+  buildEmojiPicker('tripEmojiRow', TRIP_EMOJIS, () => selTripEmoji, v => selTripEmoji = v);
+  buildCategories('catGroup', CATS, () => selCat, v => selCat = v);
+  buildCategories('tripCatGroup', TRIP_CATS, () => selTripCat, v => selTripCat = v);
   setDefaultDate();
-  updateAddedBySelect();
+  updateAddedBySelects();
   loadData();
   renderAll();
+  renderTrips();
   spawnParticles();
   watchNames();
 }
@@ -891,45 +1149,46 @@ function watchNames() {
     const el = document.getElementById(id);
     el.addEventListener('change', () => {
       localStorage.setItem(id, el.value);
-      updateAddedBySelect();
+      updateAddedBySelects();
     });
     const saved = localStorage.getItem(id);
     if (saved) el.value = saved;
   });
-  updateAddedBySelect();
+  updateAddedBySelects();
 }
 
-function updateAddedBySelect() {
-  const sel = document.getElementById('fAddedBy');
+function updateAddedBySelects() {
   const n1 = document.getElementById('name1').value || 'Person 1';
   const n2 = document.getElementById('name2').value || 'Person 2';
-  sel.innerHTML = `<option value="${n1}">🌸 ${n1}</option><option value="${n2}">⭐ ${n2}</option>`;
+  const opts = `<option value="${n1}">🌸 ${n1}</option><option value="${n2}">⭐ ${n2}</option>`;
+  document.getElementById('fAddedBy').innerHTML = opts;
+  document.getElementById('tAddedBy').innerHTML = opts;
 }
 
-function buildEmojiPicker() {
-  const row = document.getElementById('emojiRow');
-  EMOJIS.forEach(e => {
+function buildEmojiPicker(rowId, list, getVal, setVal) {
+  const row = document.getElementById(rowId);
+  list.forEach(e => {
     const b = document.createElement('button');
-    b.className = 'e-btn' + (e === selEmoji ? ' selected' : '');
+    b.className = 'e-btn' + (e === getVal() ? ' selected' : '');
     b.textContent = e;
     b.onclick = () => {
-      selEmoji = e;
-      document.querySelectorAll('.e-btn').forEach(x => x.classList.remove('selected'));
+      setVal(e);
+      row.querySelectorAll('.e-btn').forEach(x => x.classList.remove('selected'));
       b.classList.add('selected');
     };
     row.appendChild(b);
   });
 }
 
-function buildCategories() {
-  const grp = document.getElementById('catGroup');
-  CATS.forEach(c => {
+function buildCategories(grpId, list, getVal, setVal) {
+  const grp = document.getElementById(grpId);
+  list.forEach(c => {
     const b = document.createElement('button');
-    b.className = 'cat-btn' + (c === selCat ? ' active' : '');
+    b.className = 'cat-btn' + (c === getVal() ? ' active' : '');
     b.textContent = c;
     b.onclick = () => {
-      selCat = c;
-      document.querySelectorAll('.cat-btn').forEach(x => x.classList.remove('active'));
+      setVal(c);
+      grp.querySelectorAll('.cat-btn').forEach(x => x.classList.remove('active'));
       b.classList.add('active');
     };
     grp.appendChild(b);
@@ -956,19 +1215,40 @@ function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 function setPriority(btn) {
   selPri = btn.dataset.p;
-  document.querySelectorAll('.priority-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#pageDates .priority-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function setTripPriority(btn) {
+  selTripPri = btn.dataset.p;
+  document.querySelectorAll('#tripPriGroup .priority-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 }
 
 function setFilter(btn, f) {
   filter = f;
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#pageDates .filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   renderAll();
 }
 
+function setTripFilter(btn, f) {
+  tripFilter = f;
+  document.querySelectorAll('#pageTrips .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTrips();
+}
+
+function switchPage(page) {
+  activePage = page;
+  document.getElementById('pageDates').style.display = page === 'dates' ? '' : 'none';
+  document.getElementById('pageTrips').style.display = page === 'trips'  ? '' : 'none';
+  document.getElementById('tabDates').classList.toggle('active', page === 'dates');
+  document.getElementById('tabTrips').classList.toggle('active', page === 'trips');
+}
+
 // ─────────────────────────────────────────────────────────
-//  CRUD
+//  CRUD — DATE PLANS
 // ─────────────────────────────────────────────────────────
 function addTodo() {
   const title = document.getElementById('fTitle').value.trim();
@@ -993,7 +1273,7 @@ function addTodo() {
     createdAt: Date.now()
   });
 
-  save(); renderAll(); toast('💕 Added to your list!');
+  saveTodos(); renderAll(); toast('💕 Added to your list!');
   document.getElementById('fTitle').value = '';
   document.getElementById('fNote').value  = '';
   document.getElementById('fTime').value  = '';
@@ -1005,28 +1285,69 @@ function toggleDone(id) {
   if (!t) return;
   t.done = !t.done;
   if (t.done) celebrate();
-  save(); renderAll();
+  saveTodos(); renderAll();
 }
 
 function deleteTodo(id) {
   if (!confirm('Remove this plan? 🥺')) return;
   todos = todos.filter(x => x.id !== id);
-  save(); renderAll(); toast('🗑️ Removed');
+  saveTodos(); renderAll(); toast('🗑️ Removed');
 }
 
 // ─────────────────────────────────────────────────────────
-//  RENDER
+//  CRUD — DREAM TRIPS
+// ─────────────────────────────────────────────────────────
+function addTrip() {
+  const title = document.getElementById('tTitle').value.trim();
+  if (!title) { toast('🗺️ What\'s the dream?'); return; }
+
+  trips.push({
+    id:      Date.now(),
+    emoji:   selTripEmoji,
+    title,
+    note:    document.getElementById('tNote').value.trim(),
+    year:    document.getElementById('tYear').value,
+    season:  document.getElementById('tSeason').value,
+    cat:     selTripCat,
+    pri:     selTripPri,
+    addedBy: document.getElementById('tAddedBy').value,
+    done:    false,
+    createdAt: Date.now()
+  });
+
+  saveTrips(); renderTrips(); toast('✈️ Dream added!');
+  document.getElementById('tTitle').value = '';
+  document.getElementById('tNote').value  = '';
+}
+
+function toggleTripDone(id) {
+  const t = trips.find(x => x.id === id);
+  if (!t) return;
+  t.done = !t.done;
+  if (t.done) celebrate();
+  saveTrips(); renderTrips();
+}
+
+function deleteTrip(id) {
+  if (!confirm('Remove this dream trip? 🥺')) return;
+  trips = trips.filter(x => x.id !== id);
+  saveTrips(); renderTrips(); toast('🗑️ Removed');
+}
+
+// ─────────────────────────────────────────────────────────
+//  RENDER — DATE PLANS
 // ─────────────────────────────────────────────────────────
 function renderAll() {
   updateStats();
   const container = document.getElementById('listContainer');
 
   let items = todos.slice();
-  if (filter === 'todo')  items = items.filter(x => !x.done);
-  if (filter === 'done')  items = items.filter(x => x.done);
-  if (filter === 'must')  items = items.filter(x => x.pri === 'must');
-  if (filter === 'want')  items = items.filter(x => x.pri === 'want');
-  if (filter === 'maybe') items = items.filter(x => x.pri === 'maybe');
+  if (filter === 'todo')   items = items.filter(x => !x.done);
+  if (filter === 'done')   items = items.filter(x => x.done);
+  if (filter === 'must')   items = items.filter(x => x.pri === 'must');
+  if (filter === 'want')   items = items.filter(x => x.pri === 'want');
+  if (filter === 'maybe')  items = items.filter(x => x.pri === 'maybe');
+  if (filter === 'future') items = items.filter(x => x.pri === 'future');
 
   if (!items.length) {
     container.innerHTML = `
@@ -1038,7 +1359,6 @@ function renderAll() {
     return;
   }
 
-  // Group by date
   const groups = {};
   items.forEach(t => { const k = t.date||'tbd'; (groups[k]||(groups[k]=[])).push(t); });
 
@@ -1063,7 +1383,7 @@ function renderAll() {
 }
 
 function renderItem(t) {
-  const priLabel = {must:'🔥 Must!', want:'💜 Want', maybe:'💭 Maybe'}[t.pri] || '';
+  const priLabel = {must:'🔥 Must!', want:'💜 Want', maybe:'💭 Maybe', future:'🌟 Future'}[t.pri] || '';
   const priTag   = `<span class="tag tag-priority-${t.pri}">${priLabel}</span>`;
   const timeTag  = t.time ? `<span class="tag tag-time">⏰ ${esc(t.time)}</span>` : '';
   const catTag   = `<span class="tag tag-cat">🏷️ ${esc(t.cat)}</span>`;
@@ -1084,6 +1404,80 @@ function renderItem(t) {
     </div>`;
 }
 
+// ─────────────────────────────────────────────────────────
+//  RENDER — DREAM TRIPS
+// ─────────────────────────────────────────────────────────
+function renderTrips() {
+  const container = document.getElementById('tripContainer');
+
+  let items = trips.slice();
+  if (tripFilter === 'todo')   items = items.filter(x => !x.done);
+  if (tripFilter === 'done')   items = items.filter(x => x.done);
+  if (tripFilter === 'must')   items = items.filter(x => x.pri === 'must');
+  if (tripFilter === 'want')   items = items.filter(x => x.pri === 'want');
+  if (tripFilter === 'maybe')  items = items.filter(x => x.pri === 'maybe');
+  if (tripFilter === 'future') items = items.filter(x => x.pri === 'future');
+
+  if (!items.length) {
+    container.innerHTML = `
+      <div class="empty">
+        <div class="empty-art">✈️</div>
+        <h3>No dream trips yet!</h3>
+        <p>Where do you two want to go someday? ~</p>
+      </div>`;
+    return;
+  }
+
+  // Group by year/timeframe
+  const groups = {};
+  items.forEach(t => { const k = t.year||'Someday ✨'; (groups[k]||(groups[k]=[])).push(t); });
+
+  const order = ['This year 🗓️','Next year 📆','2026 🌟','2027 🌟','2028 🌟','2029 🌟','2030 🌟','Someday ✨','Dream bucket list 🌈'];
+  const sorted = Object.keys(groups).sort((a,b) => {
+    const ai = order.indexOf(a); const bi = order.indexOf(b);
+    if (ai < 0 && bi < 0) return a.localeCompare(b);
+    if (ai < 0) return 1; if (bi < 0) return -1;
+    return ai - bi;
+  });
+
+  container.innerHTML = sorted.map(yr => {
+    const list = groups[yr];
+    return `
+      <div class="group-header">
+        <div class="date-pill">${yr}</div>
+        <div class="group-line"></div>
+        <div class="group-count">${list.length} trip${list.length!==1?'s':''}</div>
+      </div>
+      ${list.map(renderTripItem).join('')}
+    `;
+  }).join('');
+}
+
+function renderTripItem(t) {
+  const priLabel = {must:'🔥 Must!', want:'💜 Want', maybe:'💭 Maybe', future:'🌟 Dream'}[t.pri] || '';
+  const priTag   = `<span class="tag tag-priority-${t.pri}">${priLabel}</span>`;
+  const catTag   = `<span class="tag tag-cat">🏷️ ${esc(t.cat)}</span>`;
+  const addTag   = `<span class="tag tag-added">👤 ${esc(t.addedBy)}</span>`;
+  const seasonTag = t.season ? `<span class="tag tag-time">${esc(t.season)}</span>` : '';
+
+  return `
+    <div class="todo-item p-${t.pri}${t.done?' done':''}" id="tr${t.id}">
+      <div class="check-btn" onclick="toggleTripDone(${t.id})">${t.done?'✓':''}</div>
+      <div class="todo-emoji">${t.emoji}</div>
+      <div class="todo-main">
+        <div class="todo-title">${esc(t.title)}</div>
+        ${t.note ? `<div class="todo-note">${esc(t.note)}</div>` : ''}
+        <div class="todo-tags">${priTag}${seasonTag}${catTag}${addTag}</div>
+      </div>
+      <div class="todo-actions">
+        <button class="icon-btn" onclick="deleteTrip(${t.id})" title="Delete">🗑️</button>
+      </div>
+    </div>`;
+}
+
+// ─────────────────────────────────────────────────────────
+//  DATE HELPERS
+// ─────────────────────────────────────────────────────────
 function fmtDate(d) {
   if (d === 'tbd') return '📅 Date TBD';
   const dt   = new Date(d + 'T12:00:00');
@@ -1122,38 +1516,106 @@ function esc(s) {
 // ─────────────────────────────────────────────────────────
 //  PERSIST & SHARE
 // ─────────────────────────────────────────────────────────
-function save() {
+function saveTodos() {
   try { localStorage.setItem('datelist_v2', JSON.stringify(todos)); } catch(e){}
 }
 
+function saveTrips() {
+  try { localStorage.setItem('dreamtrips_v1', JSON.stringify(trips)); } catch(e){}
+}
+
 function loadData() {
+  // Check URL hash for shared data (merge behavior)
   if (location.hash && location.hash.length > 1) {
     try {
-      const raw = decodeURIComponent(atob(location.hash.slice(1)));
-      todos = JSON.parse(raw);
-      save();
-      toast('💌 Your partner\'s list has arrived!');
+      const payload = JSON.parse(decodeURIComponent(atob(location.hash.slice(1))));
+      let merged = false;
+
+      if (payload.todos && Array.isArray(payload.todos)) {
+        const existing = JSON.parse(localStorage.getItem('datelist_v2') || '[]');
+        const existingIds = new Set(existing.map(x => x.id));
+        const newItems = payload.todos.filter(x => !existingIds.has(x.id));
+        todos = [...existing, ...newItems];
+        saveTodos();
+        if (newItems.length) merged = true;
+      }
+
+      if (payload.trips && Array.isArray(payload.trips)) {
+        const existing = JSON.parse(localStorage.getItem('dreamtrips_v1') || '[]');
+        const existingIds = new Set(existing.map(x => x.id));
+        const newItems = payload.trips.filter(x => !existingIds.has(x.id));
+        trips = [...existing, ...newItems];
+        saveTrips();
+        if (newItems.length) merged = true;
+      }
+
+      if (merged) toast('💌 Lists merged with your partner\'s!');
+      else toast('💌 Already up to date!');
       history.replaceState(null,'',location.pathname);
       return;
-    } catch(e){}
+    } catch(e) {
+      // Legacy format (old plain todos array)
+      try {
+        const raw = decodeURIComponent(atob(location.hash.slice(1)));
+        const incoming = JSON.parse(raw);
+        if (Array.isArray(incoming)) {
+          const existing = JSON.parse(localStorage.getItem('datelist_v2') || '[]');
+          const existingIds = new Set(existing.map(x => x.id));
+          const newItems = incoming.filter(x => !existingIds.has(x.id));
+          todos = [...existing, ...newItems];
+          saveTodos();
+          toast('💌 List synced!');
+          history.replaceState(null,'',location.pathname);
+          return;
+        }
+      } catch(e2){}
+    }
   }
+
+  // Load from localStorage
   try {
     const s = localStorage.getItem('datelist_v2');
     if (s) todos = JSON.parse(s);
   } catch(e){}
+  try {
+    const s = localStorage.getItem('dreamtrips_v1');
+    if (s) trips = JSON.parse(s);
+  } catch(e){}
 }
 
-function doShare() {
-  if (!todos.length) { toast('📝 Add some plans first!'); return; }
-  const enc = btoa(encodeURIComponent(JSON.stringify(todos)));
+function doShare(type) {
+  const hasDates = todos.length > 0;
+  const hasTrips = trips.length > 0;
+  if (!hasDates && !hasTrips) { toast('📝 Add some plans first!'); return; }
+
+  const payload = { todos, trips };
+  const enc = btoa(encodeURIComponent(JSON.stringify(payload)));
   const url = location.href.split('#')[0] + '#' + enc;
-  document.getElementById('shareInput').value = url;
-  document.getElementById('shareWrap').classList.add('show');
-  copyUrl();
+
+  if (type === 'dates') {
+    document.getElementById('shareInput').value = url;
+    document.getElementById('shareWrap').classList.add('show');
+    const qrWrap = document.getElementById('qrWrap');
+    const qrImg  = document.getElementById('qrImg');
+    qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + encodeURIComponent(url);
+    qrWrap.classList.add('show');
+    copyUrlById('shareInput');
+  } else {
+    document.getElementById('tripShareInput').value = url;
+    document.getElementById('tripShareWrap').classList.add('show');
+    const qrWrap = document.getElementById('tripQrWrap');
+    const qrImg  = document.getElementById('tripQrImg');
+    qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + encodeURIComponent(url);
+    qrWrap.classList.add('show');
+    copyUrlById('tripShareInput');
+  }
 }
 
-function copyUrl() {
-  const inp = document.getElementById('shareInput');
+function copyUrl() { copyUrlById('shareInput'); }
+function copyTripUrl() { copyUrlById('tripShareInput'); }
+
+function copyUrlById(id) {
+  const inp = document.getElementById(id);
   inp.select();
   try { document.execCommand('copy'); toast('🔗 Copied! Send it to your partner ~'); }
   catch(e) { toast('🔗 Link ready — copy and send!'); }
