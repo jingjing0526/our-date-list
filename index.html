@@ -797,8 +797,7 @@ h1 {
   color:#e65100; cursor:pointer; margin-top:10px;
 }
 </style>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 </head>
 <body>
 
@@ -1156,57 +1155,44 @@ h1 {
 
 </div><!-- /wrapper -->
 
-<!-- ── Firebase Sync Modal ── -->
+<!-- ── Sync Modal (Gun.js — no account needed) ── -->
 <div class="modal-overlay" id="syncModal" onclick="if(event.target===this)closeSyncModal()">
   <div class="modal-box">
 
-    <!-- Setup view (not yet configured) -->
+    <!-- Setup view -->
     <div id="modalSetup">
-      <div class="modal-title">🔥 设置实时同步</div>
-      <div class="modal-sub">两人用同一个「情侣码」连接，添加或修改的内容会自动出现在对方手机/电脑上，不需要发链接！</div>
-
-      <div class="setup-steps">
-        <strong>📋 一次性设置（5 分钟）：</strong><br>
-        1️⃣ 打开 <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a>，用 Google 账号登录<br>
-        2️⃣ 点「创建项目」，随便起个名（如 our-dates），关闭 Analytics，创建<br>
-        3️⃣ 左侧菜单点「<strong>Realtime Database</strong>」→「创建数据库」→ 选任意地区 →「<strong>测试模式</strong>」→ 完成<br>
-        4️⃣ 左侧菜单点「⚙️ 项目设置」→ 下滑找「您的应用」→ 点「&lt;/&gt; 网页」，填昵称后继续<br>
-        5️⃣ 复制 <code>firebaseConfig = { ... }</code> 花括号里的全部 JSON 内容，粘贴到下方<br>
-        6️⃣ 填好情侣码和配置，保存。把同样的配置发给对方，对方也填一次
-      </div>
+      <div class="modal-title">✨ 设置实时同步</div>
+      <div class="modal-sub">不需要注册账号！两人填一样的「情侣码」，你改了马上同步到对方设备 💕</div>
 
       <div class="field">
-        <div class="field-label">💑 情侣码（两人填一样的，可自定义）</div>
-        <input class="input" id="fbRoomInput" placeholder="例如：seanjing2024" maxlength="40" autocomplete="off">
+        <div class="field-label">💑 情侣码（两人用同一个，随便取）</div>
+        <input class="input" id="gunRoomInput" placeholder="例如：seanjing2024" maxlength="40" autocomplete="off">
       </div>
-      <div class="field">
-        <div class="field-label">🔥 Firebase 配置（粘贴 JSON）</div>
-        <textarea class="textarea-input" id="fbConfigInput"
-          style="min-height:110px;font-size:0.75rem;font-family:monospace;line-height:1.5"
-          placeholder='{"apiKey":"AIza...","authDomain":"...","databaseURL":"https://...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}'></textarea>
-      </div>
+      <p style="font-size:.78rem;font-weight:600;color:var(--text-light);margin:2px 0 12px;line-height:1.6">
+        💡 把这个码告诉 Sean，让他填一样的。之后添加或勾选，对方实时看到，再也不用发链接啦！
+      </p>
 
       <div class="modal-actions">
         <button class="btn-modal-cancel" onclick="closeSyncModal()">取消</button>
-        <button class="btn-modal-save"   onclick="saveSyncConfig()">🔥 连接同步</button>
+        <button class="btn-modal-save"   onclick="saveSyncConfig()">✨ 开始同步</button>
       </div>
     </div>
 
     <!-- Connected view -->
     <div id="modalConnected" style="display:none">
-      <div class="modal-title">✅ 实时同步已开启 🎉</div>
-      <div class="modal-sub">两人的更改会自动同步！把下面的情侣码告诉对方，让他/她也连上。</div>
+      <div class="modal-title">🟢 实时同步已开启 🎉</div>
+      <div class="modal-sub">两人的更改自动同步，不需要做任何操作！</div>
 
       <div class="field">
         <div class="field-label">💑 你们的情侣码</div>
         <div style="display:flex;gap:8px">
-          <input class="input" id="fbRoomDisplay" readonly onclick="this.select()"
+          <input class="input" id="gunRoomDisplay" readonly onclick="this.select()"
             style="font-weight:900;font-size:1.05rem;text-align:center;letter-spacing:2px">
           <button class="btn-copy" onclick="copyRoomCode()">📋 复制</button>
         </div>
       </div>
       <p style="font-size:.78rem;font-weight:600;color:var(--text-light);margin-top:6px;line-height:1.55">
-        把情侣码和 Firebase 配置发给对方，对方在「设置实时同步」里填入相同的信息就行啦 💕
+        把情侣码发给 Sean，他在「设置实时同步」里填一样的码就好啦 💕
       </p>
       <button class="btn-modal-disconnect" onclick="disconnectSync()">🔌 断开同步</button>
       <div class="modal-actions" style="margin-top:8px">
@@ -1239,96 +1225,81 @@ let tripFilter  = 'all';
 let activePage  = 'dates';
 
 // ─────────────────────────────────────────────────────────
-//  FIREBASE REALTIME SYNC
+//  GUN.JS REALTIME SYNC  (zero-config — just a room code)
 // ─────────────────────────────────────────────────────────
-let fbApp = null;
-let fbDb  = null;
-let fbRoom = null;
-let fbListenersOn = false;
+let gun = null;
+let gunRoomKey = null;
+let gunReady = false;
 
-function initFirebase() {
-  if (typeof firebase === 'undefined') return;
-  const cfgStr = localStorage.getItem('fb_config');
-  fbRoom = localStorage.getItem('fb_room');
-  if (!cfgStr || !fbRoom) { updateSyncStatus('disconnected'); return; }
-  try {
-    const cfg = JSON.parse(cfgStr);
-    if (!cfg.databaseURL) { updateSyncStatus('disconnected'); return; }
-    updateSyncStatus('connecting');
-    try {
-      fbApp = firebase.app('datelist-app');
-    } catch(e) {
-      fbApp = firebase.initializeApp(cfg, 'datelist-app');
-    }
-    fbDb = firebase.database(fbApp);
-    attachFbListeners();
-  } catch(e) {
-    console.error('Firebase init error:', e);
-    updateSyncStatus('disconnected');
-  }
+function djb2(str) {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i);
+  return (h >>> 0).toString(36);
 }
 
-function attachFbListeners() {
-  if (fbListenersOn) return;
-  fbListenersOn = true;
-
-  fbDb.ref('.info/connected').on('value', snap => {
-    updateSyncStatus(snap.val() ? 'connected' : 'connecting');
+function initGun() {
+  const room = localStorage.getItem('gun_room');
+  if (!room) { updateSyncStatus('disconnected'); return; }
+  updateSyncStatus('connecting');
+  gunRoomKey = 'cdl_' + djb2(room + '_s2024');
+  gun = Gun({
+    peers: [
+      'https://gun-manhattan.herokuapp.com/gun',
+      'https://gun-us.herokuapp.com/gun'
+    ]
   });
-
-  fbDb.ref(`couples/${fbRoom}/todos`).on('value', snap => {
-    const data = snap.val();
-    if (data === null) {
-      // DB empty — push our local data up as initial sync
-      if (todos.length > 0) fbDb.ref(`couples/${fbRoom}/todos`).set(todos);
+  gun.get(gunRoomKey).get('todos').on(raw => {
+    if (!raw) {
+      if (todos.length > 0) gun.get(gunRoomKey).get('todos').put(JSON.stringify(todos));
+      gunReady = true; updateSyncStatus('connected'); return;
+    }
+    try {
+      const arr = JSON.parse(raw);
+      gunReady = true; updateSyncStatus('connected');
+      if (JSON.stringify(arr) === JSON.stringify(todos)) return;
+      todos = arr;
+      try { localStorage.setItem('datelist_v2', JSON.stringify(todos)); } catch(e){}
+      renderAll();
+      toast('\u{1F495} \u540C\u6B65\u66F4\u65B0\u554A\uFF01');
+    } catch(e){}
+  });
+  gun.get(gunRoomKey).get('trips').on(raw => {
+    if (!raw) {
+      if (trips.length > 0) gun.get(gunRoomKey).get('trips').put(JSON.stringify(trips));
       return;
     }
-    const arr = Array.isArray(data) ? data : Object.values(data);
-    // Skip if this is just an echo of our own write
-    if (JSON.stringify(arr) === JSON.stringify(todos)) return;
-    todos = arr;
-    try { localStorage.setItem('datelist_v2', JSON.stringify(todos)); } catch(e){}
-    renderAll();
-    toast('💕 同步更新啦！');
+    try {
+      const arr = JSON.parse(raw);
+      if (JSON.stringify(arr) === JSON.stringify(trips)) return;
+      trips = arr;
+      try { localStorage.setItem('dreamtrips_v1', JSON.stringify(trips)); } catch(e){}
+      renderTrips();
+      toast('\u2708\uFE0F \u65C5\u884C\u8BA1\u5212\u5DF2\u540C\u6B65\uFF01');
+    } catch(e){}
   });
-
-  fbDb.ref(`couples/${fbRoom}/trips`).on('value', snap => {
-    const data = snap.val();
-    if (data === null) {
-      if (trips.length > 0) fbDb.ref(`couples/${fbRoom}/trips`).set(trips);
-      return;
-    }
-    const arr = Array.isArray(data) ? data : Object.values(data);
-    if (JSON.stringify(arr) === JSON.stringify(trips)) return;
-    trips = arr;
-    try { localStorage.setItem('dreamtrips_v1', JSON.stringify(trips)); } catch(e){}
-    renderTrips();
-    toast('✈️ 旅行计划已同步！');
-  });
+  setTimeout(() => { if (!gunReady) updateSyncStatus('disconnected'); }, 10000);
 }
 
 function updateSyncStatus(state) {
   const chip  = document.getElementById('syncChip');
   const label = document.getElementById('syncLabel');
   if (!chip) return;
-  chip.className = `sync-chip ${state}`;
-  if      (state === 'connected')   label.textContent = '🟢 实时同步已开启';
-  else if (state === 'connecting')  label.textContent = '⏳ 正在连接...';
-  else                               label.textContent = '📶 设置实时同步';
+  chip.className = 'sync-chip ' + state;
+  if      (state === 'connected')  label.textContent = '\uD83D\uDFE2 \u5B9E\u65F6\u540C\u6B65\u5DF2\u5F00\u542F';
+  else if (state === 'connecting') label.textContent = '\u23F3 \u6B63\u5728\u8FDE\u63A5...';
+  else                              label.textContent = '\uD83D\uDCF6 \u8BBE\u7F6E\u5B9E\u65F6\u540C\u6B65';
 }
 
 function openSyncModal() {
-  const modal = document.getElementById('syncModal');
-  modal.classList.add('show');
-  if (fbDb) {
+  document.getElementById('syncModal').classList.add('show');
+  if (gun && gunReady) {
     document.getElementById('modalSetup').style.display     = 'none';
     document.getElementById('modalConnected').style.display = '';
-    document.getElementById('fbRoomDisplay').value = fbRoom || '';
+    document.getElementById('gunRoomDisplay').value = localStorage.getItem('gun_room') || '';
   } else {
     document.getElementById('modalSetup').style.display     = '';
     document.getElementById('modalConnected').style.display = 'none';
-    document.getElementById('fbRoomInput').value   = localStorage.getItem('fb_room') || '';
-    document.getElementById('fbConfigInput').value = localStorage.getItem('fb_config') || '';
+    document.getElementById('gunRoomInput').value = localStorage.getItem('gun_room') || '';
   }
 }
 
@@ -1337,53 +1308,30 @@ function closeSyncModal() {
 }
 
 function saveSyncConfig() {
-  const room = (document.getElementById('fbRoomInput').value || '').trim().replace(/[^a-zA-Z0-9_\-]/g,'');
-  const raw  = (document.getElementById('fbConfigInput').value || '').trim();
-  if (!room) { alert('请输入情侣码！'); return; }
-  if (!raw)  { alert('请粘贴 Firebase 配置 JSON！'); return; }
-  let cfg;
-  try { cfg = JSON.parse(raw); } catch(e) { alert('JSON 格式有误，请检查！\n\n' + e.message); return; }
-  if (!cfg.databaseURL) { alert('配置中缺少 databaseURL！\n请确认已在 Firebase 控制台创建 Realtime Database。'); return; }
-  localStorage.setItem('fb_room',   room);
-  localStorage.setItem('fb_config', JSON.stringify(cfg));
-  fbRoom = room;
+  const room = (document.getElementById('gunRoomInput').value || '').trim();
+  if (!room) { toast('\u270F\uFE0F \u8BF7\u8F93\u5165\u60C5\u4FA3\u7801\uFF01'); return; }
+  localStorage.setItem('gun_room', room);
+  gun = null; gunRoomKey = null; gunReady = false;
   closeSyncModal();
-  // Detach old listeners then re-init
-  if (fbDb) {
-    try {
-      fbDb.ref('.info/connected').off();
-      fbDb.ref(`couples/${fbRoom}/todos`).off();
-      fbDb.ref(`couples/${fbRoom}/trips`).off();
-    } catch(e){}
-  }
-  fbDb = null; fbListenersOn = false;
-  initFirebase();
-  toast('🔥 Firebase 已连接！两人添加的内容将自动同步 💕');
+  initGun();
+  toast('\u2728 \u5DF2\u8FDE\u63A5\uFF01\u6B63\u5728\u540C\u6B65...');
 }
 
 function copyRoomCode() {
-  const el = document.getElementById('fbRoomDisplay');
+  const el = document.getElementById('gunRoomDisplay');
   el.select();
-  try { document.execCommand('copy'); toast('📋 情侣码已复制！'); } catch(e){}
+  try { document.execCommand('copy'); toast('\uD83D\uDCCB \u60C5\u4FA3\u7801\u5DF2\u590D\u5236\uFF01'); } catch(e){}
 }
 
 function disconnectSync() {
-  if (!confirm('断开同步后，数据仍保留在本设备。确定断开？')) return;
-  const oldRoom = fbRoom;
-  if (fbDb && oldRoom) {
-    try {
-      fbDb.ref('.info/connected').off();
-      fbDb.ref(`couples/${oldRoom}/todos`).off();
-      fbDb.ref(`couples/${oldRoom}/trips`).off();
-    } catch(e){}
-  }
-  localStorage.removeItem('fb_config');
-  localStorage.removeItem('fb_room');
-  fbDb = null; fbApp = null; fbRoom = null; fbListenersOn = false;
+  if (!confirm('\u65AD\u5F00\u540C\u6B65\uFF1F\u6570\u636E\u4ECD\u4FDD\u7559\u5728\u672C\u8BBE\u5907\u4E0A\u3002')) return;
+  localStorage.removeItem('gun_room');
+  gun = null; gunRoomKey = null; gunReady = false;
   updateSyncStatus('disconnected');
   closeSyncModal();
-  toast('🔌 已断开同步');
+  toast('\uD83D\uDD0C \u5DF2\u65AD\u5F00\u540C\u6B65');
 }
+
 
 const EMOJIS = [
   '💕','🌸','🍓','☕','🎬','🏖️','🍜','🎡','🚗','🌙',
@@ -1418,7 +1366,7 @@ function init() {
   renderTrips();
   spawnParticles();
   watchNames();
-  initFirebase();
+  initGun();
 }
 
 function watchNames() {
@@ -1795,16 +1743,12 @@ function esc(s) {
 // ─────────────────────────────────────────────────────────
 function saveTodos() {
   try { localStorage.setItem('datelist_v2', JSON.stringify(todos)); } catch(e){}
-  if (fbDb && fbRoom) {
-    fbDb.ref(`couples/${fbRoom}/todos`).set(todos).catch(e => console.error('FB todos write:', e));
-  }
+  if (gun && gunRoomKey) gun.get(gunRoomKey).get('todos').put(JSON.stringify(todos));
 }
 
 function saveTrips() {
   try { localStorage.setItem('dreamtrips_v1', JSON.stringify(trips)); } catch(e){}
-  if (fbDb && fbRoom) {
-    fbDb.ref(`couples/${fbRoom}/trips`).set(trips).catch(e => console.error('FB trips write:', e));
-  }
+  if (gun && gunRoomKey) gun.get(gunRoomKey).get('trips').put(JSON.stringify(trips));
 }
 
 function loadData() {
