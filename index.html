@@ -1182,7 +1182,7 @@ alter publication supabase_realtime add table couple_sync;</code>
       </div>
       <div class="field">
         <div class="field-label">🔑 Anon Key (public)</div>
-        <input class="input" id="sbKeyInput" placeholder="eyJhbGciOi..." autocomplete="off" style="font-size:0.82rem">
+        <input class="input" id="sbKeyInput" placeholder="eyJ... 或 sb_publishable_..." autocomplete="off" style="font-size:0.82rem">
       </div>
       <div class="modal-actions">
         <button class="btn-modal-cancel" onclick="closeSyncModal()">取消</button>
@@ -1351,7 +1351,7 @@ function saveSyncConfig() {
   const url = (document.getElementById('sbUrlInput').value || '').trim().replace(/\/+$/, '');
   const key = (document.getElementById('sbKeyInput').value || '').trim();
   if (!url || !url.startsWith('https://')) { alert('请填写正确的 Project URL！'); return; }
-  if (!key || !key.startsWith('eyJ'))      { alert('请填写正确的 Anon Key！'); return; }
+  if (!key || key.length < 20)              { alert('请填写正确的 Anon Key！'); return; }
   localStorage.setItem('sb_url', url);
   localStorage.setItem('sb_key', key);
   sb = null; if (sbChannel) { try { sbChannel.unsubscribe(); } catch(e){} sbChannel = null; }
