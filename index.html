@@ -875,9 +875,12 @@ h1 {
       <div class="stat-chip">💕 <span class="num" id="statLeft">0</span> to go</div>
       <div class="stat-chip">🔥 <span class="num" id="statMust">0</span> must-do</div>
     </div>
-    <div id="syncChip" class="sync-chip disconnected" onclick="openSyncModal()" title="设置实时同步">
-      <span class="sync-dot"></span>
-      <span id="syncLabel">📶 设置实时同步</span>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap;justify-content:center">
+      <div id="syncChip" class="sync-chip connecting">
+        <span class="sync-dot"></span>
+        <span id="syncLabel">⏳ 正在连接...</span>
+      </div>
+      <button class="btn-share" onclick="shareLink()" style="padding:7px 18px;font-size:0.82rem;border-radius:50px">🔗 分享给 Sean</button>
     </div>
   </div>
 
@@ -1155,53 +1158,6 @@ h1 {
 
 </div><!-- /wrapper -->
 
-<!-- ── Sync Modal (Gun.js — no account needed) ── -->
-<div class="modal-overlay" id="syncModal" onclick="if(event.target===this)closeSyncModal()">
-  <div class="modal-box">
-
-    <!-- Setup view -->
-    <div id="modalSetup">
-      <div class="modal-title">✨ 设置实时同步</div>
-      <div class="modal-sub">不需要注册账号！两人填一样的「情侣码」，你改了马上同步到对方设备 💕</div>
-
-      <div class="field">
-        <div class="field-label">💑 情侣码（两人用同一个，随便取）</div>
-        <input class="input" id="gunRoomInput" placeholder="例如：seanjing2024" maxlength="40" autocomplete="off">
-      </div>
-      <p style="font-size:.78rem;font-weight:600;color:var(--text-light);margin:2px 0 12px;line-height:1.6">
-        💡 把这个码告诉 Sean，让他填一样的。之后添加或勾选，对方实时看到，再也不用发链接啦！
-      </p>
-
-      <div class="modal-actions">
-        <button class="btn-modal-cancel" onclick="closeSyncModal()">取消</button>
-        <button class="btn-modal-save"   onclick="saveSyncConfig()">✨ 开始同步</button>
-      </div>
-    </div>
-
-    <!-- Connected view -->
-    <div id="modalConnected" style="display:none">
-      <div class="modal-title">🟢 实时同步已开启 🎉</div>
-      <div class="modal-sub">两人的更改自动同步，不需要做任何操作！</div>
-
-      <div class="field">
-        <div class="field-label">💑 你们的情侣码</div>
-        <div style="display:flex;gap:8px">
-          <input class="input" id="gunRoomDisplay" readonly onclick="this.select()"
-            style="font-weight:900;font-size:1.05rem;text-align:center;letter-spacing:2px">
-          <button class="btn-copy" onclick="copyRoomCode()">📋 复制</button>
-        </div>
-      </div>
-      <p style="font-size:.78rem;font-weight:600;color:var(--text-light);margin-top:6px;line-height:1.55">
-        把情侣码发给 Sean，他在「设置实时同步」里填一样的码就好啦 💕
-      </p>
-      <button class="btn-modal-disconnect" onclick="disconnectSync()">🔌 断开同步</button>
-      <div class="modal-actions" style="margin-top:8px">
-        <button class="btn-modal-save" onclick="closeSyncModal()" style="flex:1">✓ 关闭</button>
-      </div>
-    </div>
-
-  </div>
-</div>
 
 <!-- Toast & celebrate -->
 <div class="toast" id="toast"></div>
@@ -1225,7 +1181,7 @@ let tripFilter  = 'all';
 let activePage  = 'dates';
 
 // ─────────────────────────────────────────────────────────
-//  GUN.JS REALTIME SYNC  (zero-config — just a room code)
+//  GUN.JS REALTIME SYNC  (URL-based room — no setup needed)
 // ─────────────────────────────────────────────────────────
 let gun = null;
 let gunRoomKey = null;
@@ -1237,17 +1193,26 @@ function djb2(str) {
   return (h >>> 0).toString(36);
 }
 
+function getOrCreateRoom() {
+  const params = new URLSearchParams(location.search);
+  let room = params.get('room') || localStorage.getItem('gun_room');
+  if (!room) {
+    room = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  }
+  localStorage.setItem('gun_room', room);
+  const base = location.href.split('?')[0];
+  if (location.search !== '?room=' + room) {
+    history.replaceState(null, '', base + '?room=' + room);
+  }
+  return room;
+}
+
 function initGun() {
-  const room = localStorage.getItem('gun_room');
-  if (!room) { updateSyncStatus('disconnected'); return; }
-  updateSyncStatus('connecting');
+  const room = getOrCreateRoom();
   gunRoomKey = 'cdl_' + djb2(room + '_s2024');
-  gun = Gun({
-    peers: [
-      'https://gun-manhattan.herokuapp.com/gun',
-      'https://gun-us.herokuapp.com/gun'
-    ]
-  });
+  updateSyncStatus('connecting');
+  gun = Gun({ peers: ['https://gun-manhattan.herokuapp.com/gun', 'https://gun-us.herokuapp.com/gun'] });
+
   gun.get(gunRoomKey).get('todos').on(raw => {
     if (!raw) {
       if (todos.length > 0) gun.get(gunRoomKey).get('todos').put(JSON.stringify(todos));
@@ -1260,9 +1225,9 @@ function initGun() {
       todos = arr;
       try { localStorage.setItem('datelist_v2', JSON.stringify(todos)); } catch(e){}
       renderAll();
-      toast('\u{1F495} \u540C\u6B65\u66F4\u65B0\u554A\uFF01');
     } catch(e){}
   });
+
   gun.get(gunRoomKey).get('trips').on(raw => {
     if (!raw) {
       if (trips.length > 0) gun.get(gunRoomKey).get('trips').put(JSON.stringify(trips));
@@ -1274,9 +1239,9 @@ function initGun() {
       trips = arr;
       try { localStorage.setItem('dreamtrips_v1', JSON.stringify(trips)); } catch(e){}
       renderTrips();
-      toast('\u2708\uFE0F \u65C5\u884C\u8BA1\u5212\u5DF2\u540C\u6B65\uFF01');
     } catch(e){}
   });
+
   setTimeout(() => { if (!gunReady) updateSyncStatus('disconnected'); }, 10000);
 }
 
@@ -1285,51 +1250,28 @@ function updateSyncStatus(state) {
   const label = document.getElementById('syncLabel');
   if (!chip) return;
   chip.className = 'sync-chip ' + state;
-  if      (state === 'connected')  label.textContent = '\uD83D\uDFE2 \u5B9E\u65F6\u540C\u6B65\u5DF2\u5F00\u542F';
-  else if (state === 'connecting') label.textContent = '\u23F3 \u6B63\u5728\u8FDE\u63A5...';
-  else                              label.textContent = '\uD83D\uDCF6 \u8BBE\u7F6E\u5B9E\u65F6\u540C\u6B65';
+  if      (state === 'connected')  label.textContent = '\u{1F7E2} \u5DF2\u540C\u6B65';
+  else if (state === 'connecting') label.textContent = '\u23F3 \u8FDE\u63A5\u4E2D...';
+  else                              label.textContent = '\u26A0\uFE0F \u65AD\u7EBF\u4E86';
 }
 
-function openSyncModal() {
-  document.getElementById('syncModal').classList.add('show');
-  if (gun && gunReady) {
-    document.getElementById('modalSetup').style.display     = 'none';
-    document.getElementById('modalConnected').style.display = '';
-    document.getElementById('gunRoomDisplay').value = localStorage.getItem('gun_room') || '';
+function shareLink() {
+  const url = location.href;
+  const copied = () => toast('\uD83D\uDD17 \u94FE\u63A5\u5DF2\u590D\u5236\uFF01\u53D1\u7ED9 Sean \u5C31\u597D\u554A \uD83D\uDC95');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(copied).catch(() => fallbackCopy(url, copied));
   } else {
-    document.getElementById('modalSetup').style.display     = '';
-    document.getElementById('modalConnected').style.display = 'none';
-    document.getElementById('gunRoomInput').value = localStorage.getItem('gun_room') || '';
+    fallbackCopy(url, copied);
   }
 }
 
-function closeSyncModal() {
-  document.getElementById('syncModal').classList.remove('show');
-}
-
-function saveSyncConfig() {
-  const room = (document.getElementById('gunRoomInput').value || '').trim();
-  if (!room) { toast('\u270F\uFE0F \u8BF7\u8F93\u5165\u60C5\u4FA3\u7801\uFF01'); return; }
-  localStorage.setItem('gun_room', room);
-  gun = null; gunRoomKey = null; gunReady = false;
-  closeSyncModal();
-  initGun();
-  toast('\u2728 \u5DF2\u8FDE\u63A5\uFF01\u6B63\u5728\u540C\u6B65...');
-}
-
-function copyRoomCode() {
-  const el = document.getElementById('gunRoomDisplay');
+function fallbackCopy(text, cb) {
+  const el = document.createElement('input');
+  el.value = text;
+  document.body.appendChild(el);
   el.select();
-  try { document.execCommand('copy'); toast('\uD83D\uDCCB \u60C5\u4FA3\u7801\u5DF2\u590D\u5236\uFF01'); } catch(e){}
-}
-
-function disconnectSync() {
-  if (!confirm('\u65AD\u5F00\u540C\u6B65\uFF1F\u6570\u636E\u4ECD\u4FDD\u7559\u5728\u672C\u8BBE\u5907\u4E0A\u3002')) return;
-  localStorage.removeItem('gun_room');
-  gun = null; gunRoomKey = null; gunReady = false;
-  updateSyncStatus('disconnected');
-  closeSyncModal();
-  toast('\uD83D\uDD0C \u5DF2\u65AD\u5F00\u540C\u6B65');
+  try { document.execCommand('copy'); cb(); } catch(e){}
+  document.body.removeChild(el);
 }
 
 
