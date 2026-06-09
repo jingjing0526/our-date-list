@@ -797,7 +797,7 @@ h1 {
   color:#e65100; cursor:pointer; margin-top:10px;
 }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -876,9 +876,9 @@ h1 {
       <div class="stat-chip">🔥 <span class="num" id="statMust">0</span> must-do</div>
     </div>
     <div style="display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap;justify-content:center">
-      <div id="syncChip" class="sync-chip connecting">
+      <div id="syncChip" class="sync-chip disconnected" onclick="openSyncModal()" style="cursor:pointer" title="设置实时同步">
         <span class="sync-dot"></span>
-        <span id="syncLabel">⏳ 正在连接...</span>
+        <span id="syncLabel">📶 设置实时同步</span>
       </div>
       <button class="btn-share" onclick="shareLink()" style="padding:7px 18px;font-size:0.82rem;border-radius:50px">🔗 分享给 Sean</button>
     </div>
@@ -1159,6 +1159,56 @@ h1 {
 </div><!-- /wrapper -->
 
 
+<!-- ── Supabase Sync Modal ── -->
+<div class="modal-overlay" id="syncModal" onclick="if(event.target===this)closeSyncModal()">
+  <div class="modal-box">
+
+    <div id="modalSetup">
+      <div class="modal-title">🔥 设置实时同步</div>
+      <div class="modal-sub">用 Supabase 免费服务——设置一次，之后永久自动同步，不需要发链接 💕</div>
+      <div class="setup-steps">
+        <strong>📋 三步搞定（约 3 分钟）：</strong><br><br>
+        <strong>① </strong>打开 <a href="https://supabase.com" target="_blank">supabase.com</a> → 用 Google 登录 → 「New project」→ 随便起个名字 → 创建（等约 1 分钟）<br><br>
+        <strong>② </strong>左侧点「<strong>SQL Editor</strong>」→「New query」→ 把下面这段代码粘贴进去 → 点「<strong>RUN ▶</strong>」<br>
+        <code style="display:block;background:#f0f0f0;padding:8px 10px;border-radius:8px;font-size:0.7rem;margin:8px 0;line-height:1.8;font-family:monospace">create table couple_sync (room_id text primary key, todos jsonb default '[]'::jsonb, trips jsonb default '[]'::jsonb);
+alter table couple_sync enable row level security;
+create policy "open" on couple_sync for all using (true) with check (true);
+alter publication supabase_realtime add table couple_sync;</code>
+        <strong>③ </strong>左侧点「⚙️ Settings」→「API」→ 复制 <strong>Project URL</strong> 和 <strong>anon public</strong> key，粘贴到下方
+      </div>
+      <div class="field">
+        <div class="field-label">🔗 Project URL</div>
+        <input class="input" id="sbUrlInput" placeholder="https://xxxxxxxx.supabase.co" autocomplete="off">
+      </div>
+      <div class="field">
+        <div class="field-label">🔑 Anon Key (public)</div>
+        <input class="input" id="sbKeyInput" placeholder="eyJhbGciOi..." autocomplete="off" style="font-size:0.82rem">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="closeSyncModal()">取消</button>
+        <button class="btn-modal-save" onclick="saveSyncConfig()">🔥 连接同步</button>
+      </div>
+    </div>
+
+    <div id="modalConnected" style="display:none">
+      <div class="modal-title">✅ 实时同步已开启 🎉</div>
+      <div class="modal-sub">你在电脑上加的内容会立刻出现在手机上，反过来也是 💕</div>
+      <div class="field">
+        <div class="field-label">📱 发给 Sean 的链接（他也需要设置一次 Supabase）</div>
+        <div style="display:flex;gap:8px">
+          <input class="input" id="sbShareUrl" readonly onclick="this.select()" style="font-size:0.75rem">
+          <button class="btn-copy" onclick="copyShareUrl()">📋</button>
+        </div>
+      </div>
+      <button class="btn-modal-disconnect" onclick="disconnectSync()">🔌 断开同步</button>
+      <div class="modal-actions" style="margin-top:8px">
+        <button class="btn-modal-save" onclick="closeSyncModal()" style="flex:1">✓ 关闭</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <!-- Toast & celebrate -->
 <div class="toast" id="toast"></div>
 <div class="celebrate" id="celebrate">🎉 ✨ 💕 ✨ 🎉</div>
@@ -1181,68 +1231,92 @@ let tripFilter  = 'all';
 let activePage  = 'dates';
 
 // ─────────────────────────────────────────────────────────
-//  GUN.JS REALTIME SYNC  (URL-based room — no setup needed)
+//  SUPABASE REALTIME SYNC
 // ─────────────────────────────────────────────────────────
-let gun = null;
-let gunRoomKey = null;
-let gunReady = false;
-
-function djb2(str) {
-  let h = 5381;
-  for (let i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i);
-  return (h >>> 0).toString(36);
-}
+let sb         = null;
+let sbRoom     = null;
+let sbChannel  = null;
+let syncTimer  = null;
 
 function getOrCreateRoom() {
   const params = new URLSearchParams(location.search);
-  let room = params.get('room') || localStorage.getItem('gun_room');
-  if (!room) {
-    room = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  // Auto-configure from a shared link (Sean just opens, no setup needed)
+  const sharedUrl = params.get('su');
+  const sharedKey = params.get('sk');
+  if (sharedUrl && sharedKey) {
+    try {
+      localStorage.setItem('sb_url', atob(sharedUrl));
+      localStorage.setItem('sb_key', atob(sharedKey));
+    } catch(e){}
   }
-  localStorage.setItem('gun_room', room);
+  let room = params.get('room') || localStorage.getItem('sb_room');
+  if (!room) room = Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+  localStorage.setItem('sb_room', room);
+  // Clean credentials out of visible URL, keep only ?room=
   const base = location.href.split('?')[0];
-  if (location.search !== '?room=' + room) {
-    history.replaceState(null, '', base + '?room=' + room);
-  }
+  history.replaceState(null,'', base + '?room=' + room);
   return room;
 }
 
-function initGun() {
-  const room = getOrCreateRoom();
-  gunRoomKey = 'cdl_' + djb2(room + '_s2024');
+function initSupabase() {
+  const url = localStorage.getItem('sb_url');
+  const key = localStorage.getItem('sb_key');
+  sbRoom = getOrCreateRoom();
+  if (!url || !key) { updateSyncStatus('disconnected'); return; }
   updateSyncStatus('connecting');
-  gun = Gun({ peers: ['https://gun-manhattan.herokuapp.com/gun', 'https://gun-us.herokuapp.com/gun'] });
+  try {
+    sb = window.supabase.createClient(url, key);
+    // Load initial data then subscribe
+    sb.from('couple_sync').select('todos,trips').eq('room_id', sbRoom).maybeSingle()
+      .then(({ data, error }) => {
+        if (error) { console.error('SB read:', error); updateSyncStatus('disconnected'); return; }
+        if (data) {
+          if (JSON.stringify(data.todos) !== JSON.stringify(todos)) {
+            todos = data.todos || [];
+            try { localStorage.setItem('datelist_v2', JSON.stringify(todos)); } catch(e){}
+            renderAll();
+          }
+          if (JSON.stringify(data.trips) !== JSON.stringify(trips)) {
+            trips = data.trips || [];
+            try { localStorage.setItem('dreamtrips_v1', JSON.stringify(trips)); } catch(e){}
+            renderTrips();
+          }
+        } else {
+          // First connect — seed with local data
+          sb.from('couple_sync').insert({ room_id: sbRoom, todos, trips }).then();
+        }
+        // Subscribe to realtime changes
+        sbChannel = sb.channel('room_' + sbRoom)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'couple_sync',
+              filter: 'room_id=eq.' + sbRoom }, ({ new: row }) => {
+            if (!row) return;
+            if (JSON.stringify(row.todos) !== JSON.stringify(todos)) {
+              todos = row.todos || [];
+              try { localStorage.setItem('datelist_v2', JSON.stringify(todos)); } catch(e){}
+              renderAll();
+            }
+            if (JSON.stringify(row.trips) !== JSON.stringify(trips)) {
+              trips = row.trips || [];
+              try { localStorage.setItem('dreamtrips_v1', JSON.stringify(trips)); } catch(e){}
+              renderTrips();
+            }
+          })
+          .subscribe(status => {
+            if (status === 'SUBSCRIBED') updateSyncStatus('connected');
+            else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') updateSyncStatus('disconnected');
+          });
+      });
+  } catch(e) { console.error('SB init:', e); updateSyncStatus('disconnected'); }
+}
 
-  gun.get(gunRoomKey).get('todos').on(raw => {
-    if (!raw) {
-      if (todos.length > 0) gun.get(gunRoomKey).get('todos').put(JSON.stringify(todos));
-      gunReady = true; updateSyncStatus('connected'); return;
-    }
-    try {
-      const arr = JSON.parse(raw);
-      gunReady = true; updateSyncStatus('connected');
-      if (JSON.stringify(arr) === JSON.stringify(todos)) return;
-      todos = arr;
-      try { localStorage.setItem('datelist_v2', JSON.stringify(todos)); } catch(e){}
-      renderAll();
-    } catch(e){}
-  });
-
-  gun.get(gunRoomKey).get('trips').on(raw => {
-    if (!raw) {
-      if (trips.length > 0) gun.get(gunRoomKey).get('trips').put(JSON.stringify(trips));
-      return;
-    }
-    try {
-      const arr = JSON.parse(raw);
-      if (JSON.stringify(arr) === JSON.stringify(trips)) return;
-      trips = arr;
-      try { localStorage.setItem('dreamtrips_v1', JSON.stringify(trips)); } catch(e){}
-      renderTrips();
-    } catch(e){}
-  });
-
-  setTimeout(() => { if (!gunReady) updateSyncStatus('disconnected'); }, 10000);
+function syncToSupabase() {
+  if (!sb || !sbRoom) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    sb.from('couple_sync').upsert({ room_id: sbRoom, todos, trips }).then(({ error }) => {
+      if (error) console.error('SB write:', error);
+    });
+  }, 300);
 }
 
 function updateSyncStatus(state) {
@@ -1252,26 +1326,74 @@ function updateSyncStatus(state) {
   chip.className = 'sync-chip ' + state;
   if      (state === 'connected')  label.textContent = '\u{1F7E2} \u5DF2\u540C\u6B65';
   else if (state === 'connecting') label.textContent = '\u23F3 \u8FDE\u63A5\u4E2D...';
-  else                              label.textContent = '\u26A0\uFE0F \u65AD\u7EBF\u4E86';
+  else                              label.textContent = '\uD83D\uDCF6 \u8BBE\u7F6E\u5B9E\u65F6\u540C\u6B65';
 }
 
-function shareLink() {
-  const url = location.href;
-  const copied = () => toast('\uD83D\uDD17 \u94FE\u63A5\u5DF2\u590D\u5236\uFF01\u53D1\u7ED9 Sean \u5C31\u597D\u554A \uD83D\uDC95');
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(url).then(copied).catch(() => fallbackCopy(url, copied));
+function openSyncModal() {
+  document.getElementById('syncModal').classList.add('show');
+  if (sb && sbRoom) {
+    document.getElementById('modalSetup').style.display     = 'none';
+    document.getElementById('modalConnected').style.display = '';
+    document.getElementById('sbShareUrl').value = location.href;
   } else {
-    fallbackCopy(url, copied);
+    document.getElementById('modalSetup').style.display     = '';
+    document.getElementById('modalConnected').style.display = 'none';
+    document.getElementById('sbUrlInput').value = localStorage.getItem('sb_url') || '';
+    document.getElementById('sbKeyInput').value = localStorage.getItem('sb_key') || '';
   }
 }
 
-function fallbackCopy(text, cb) {
-  const el = document.createElement('input');
-  el.value = text;
-  document.body.appendChild(el);
+function closeSyncModal() {
+  document.getElementById('syncModal').classList.remove('show');
+}
+
+function saveSyncConfig() {
+  const url = (document.getElementById('sbUrlInput').value || '').trim().replace(/\/+$/, '');
+  const key = (document.getElementById('sbKeyInput').value || '').trim();
+  if (!url || !url.startsWith('https://')) { alert('请填写正确的 Project URL！'); return; }
+  if (!key || !key.startsWith('eyJ'))      { alert('请填写正确的 Anon Key！'); return; }
+  localStorage.setItem('sb_url', url);
+  localStorage.setItem('sb_key', key);
+  sb = null; if (sbChannel) { try { sbChannel.unsubscribe(); } catch(e){} sbChannel = null; }
+  closeSyncModal();
+  initSupabase();
+  toast('\uD83D\uDD25 \u8FDE\u63A5\u4E2D\uFF0C\u7A0D\u7B49...');
+}
+
+function copyShareUrl() {
+  const el = document.getElementById('sbShareUrl');
   el.select();
-  try { document.execCommand('copy'); cb(); } catch(e){}
-  document.body.removeChild(el);
+  try { document.execCommand('copy'); toast('\uD83D\uDD17 \u94FE\u63A5\u5DF2\u590D\u5236\uFF01'); } catch(e){}
+}
+
+function shareLink() {
+  const base  = location.href.split('?')[0];
+  const room  = localStorage.getItem('sb_room') || '';
+  const sbUrl = localStorage.getItem('sb_url')  || '';
+  const sbKey = localStorage.getItem('sb_key')  || '';
+  let url = base + '?room=' + room;
+  if (sbUrl && sbKey) {
+    url += '&su=' + btoa(sbUrl) + '&sk=' + btoa(sbKey);
+  }
+  const doCopy = (u) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(u).then(() => toast('\uD83D\uDD17 \u94FE\u63A5\u5DF2\u590D\u5236\uFF01\u53D1\u7ED9 Sean \u5C31\u597D\u554A \uD83D\uDC95'));
+    } else {
+      const el = document.createElement('input');
+      el.value = u; document.body.appendChild(el); el.select();
+      try { document.execCommand('copy'); toast('\uD83D\uDD17 \u94FE\u63A5\u5DF2\u590D\u5236\uFF01'); } catch(e){}
+      document.body.removeChild(el);
+    }
+  };
+  doCopy(url);
+}
+
+function disconnectSync() {
+  if (!confirm('\u65AD\u5F00\u540C\u6B65\uFF1F\u6570\u636E\u4ECD\u4FDD\u7559\u5728\u672C\u8BBE\u5907\u3002')) return;
+  localStorage.removeItem('sb_url'); localStorage.removeItem('sb_key');
+  if (sbChannel) { try { sbChannel.unsubscribe(); } catch(e){} sbChannel = null; }
+  sb = null; updateSyncStatus('disconnected'); closeSyncModal();
+  toast('\uD83D\uDD0C \u5DF2\u65AD\u5F00\u540C\u6B65');
 }
 
 
@@ -1308,7 +1430,7 @@ function init() {
   renderTrips();
   spawnParticles();
   watchNames();
-  initGun();
+  initSupabase();
 }
 
 function watchNames() {
@@ -1685,12 +1807,12 @@ function esc(s) {
 // ─────────────────────────────────────────────────────────
 function saveTodos() {
   try { localStorage.setItem('datelist_v2', JSON.stringify(todos)); } catch(e){}
-  if (gun && gunRoomKey) gun.get(gunRoomKey).get('todos').put(JSON.stringify(todos));
+  syncToSupabase();
 }
 
 function saveTrips() {
   try { localStorage.setItem('dreamtrips_v1', JSON.stringify(trips)); } catch(e){}
-  if (gun && gunRoomKey) gun.get(gunRoomKey).get('trips').put(JSON.stringify(trips));
+  syncToSupabase();
 }
 
 function loadData() {
